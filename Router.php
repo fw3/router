@@ -124,23 +124,8 @@ abstract class Router {
 	];
 
 	//----------------------------------------------
-	// リザルト配列キー
-	//----------------------------------------------
-	/**
-	 * @var	string	配列キー：ルーティングURL
-	 * @static
-	 */
-	public const KEY_ROUTING_URI			= 'routing_uri';
-
-	//----------------------------------------------
 	// 設定値
 	//----------------------------------------------
-	/**
-	 * @var	string	配列キー：パスパラメータリスト
-	 * @static
-	 */
-	public const KEY_PATH_PARAMETER_LIST	= 'path_parameter_list';
-
 	/**
 	 * @var	string	エスケープ文字
 	 * @static
@@ -203,6 +188,9 @@ abstract class Router {
 	/** @staticvar	string	カレントデータ：プロトコル */
 	protected static $currentProtocol	= null;
 
+	/** @staticvar	string	カレントデータ：ミドルウェア */
+	protected static $currentMiddleware	= null;
+
 	//----------------------------------------------
 	// on class cache
 	//----------------------------------------------
@@ -213,10 +201,10 @@ abstract class Router {
 	protected static $reverseUrl	= [];
 
 	/** @staticvar	array	共通オプション */
-	protected static $_commonOptions = [];
+	protected static $commonOptions = [];
 
 	/** @staticvar	array	ルールベースオプション */
-	protected static $_ruleBaseOptions = [];
+	protected static $ruleBaseOptions = [];
 
 	//----------------------------------------------
 	// 設定
@@ -239,9 +227,10 @@ abstract class Router {
 	public static function match ($methods, $path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, $method, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, $methods, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -251,7 +240,9 @@ abstract class Router {
 			static::$methodConnecterMap[$method][$index]	= $index;
 		}
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -267,9 +258,10 @@ abstract class Router {
 	public static function any ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_GROUP_ANY, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_GROUP_ANY, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -279,7 +271,9 @@ abstract class Router {
 			static::$methodConnecterMap[$method][$index]	= $index;
 		}
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -295,9 +289,10 @@ abstract class Router {
 	public static function connect ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_GROUP_CONNECT, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_GROUP_CONNECT, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -307,7 +302,9 @@ abstract class Router {
 			static::$methodConnecterMap[$method][$index]	= $index;
 		}
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -323,9 +320,10 @@ abstract class Router {
 	public static function redirect ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_REDIRECT, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_GROUP_ANY, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -335,7 +333,9 @@ abstract class Router {
 			static::$methodConnecterMap[$method][$index]	= $index;
 		}
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -351,9 +351,10 @@ abstract class Router {
 	public static function view ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_VIEW, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_GROUP_ANY, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -363,7 +364,9 @@ abstract class Router {
 			static::$methodConnecterMap[$method][$index]	= $index;
 		}
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -382,10 +385,11 @@ abstract class Router {
 	public static function group ($group = self::DEFAULT, $callback = null) {
 		if (is_null($callback)) {
 			return Group::init([
-				'method'	=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
-				'group'		=> $group,
-				'domain'	=> static::$currentDomain ?? static::DEFAULT,
-				'protocol'	=> static::$currentProtocol ?? static::getCurrentProtocol(),
+				'method'		=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
+				'group'			=> $group,
+				'domain'		=> static::$currentDomain ?? static::DEFAULT,
+				'protocol'		=> static::$currentProtocol ?? static::getCurrentProtocol(),
+				'middleware'	=> static::$currentMiddleware ?? static::DEFAULT,
 			]);
 		}
 
@@ -407,15 +411,16 @@ abstract class Router {
 	public static function domain ($domain= self::DEFAULT, $callback = null) {
 		if (is_null($callback)) {
 			return Group::init([
-				'method'	=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
-				'group'		=> static::$currentGroup ?? static::DEFAULT,
-				'domain'	=> $domain,
-				'protocol'	=> static::$currentProtocol ?? static::getCurrentProtocol(),
+				'method'		=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
+				'group'			=> static::$currentGroup ?? static::DEFAULT,
+				'domain'		=> $domain,
+				'protocol'		=> static::$currentProtocol ?? static::getCurrentProtocol(),
+				'middleware'	=> static::$currentMiddleware ?? static::DEFAULT,
 			]);
 		}
 
 		$base_domain= static::$currentDomain;
-		static::$currentDomain = static::$currentDomain;
+		static::$currentDomain = $domain;
 		$callback();
 		static::$currentDomain = $base_domain;
 
@@ -425,24 +430,51 @@ abstract class Router {
 	/**
 	 * プロトコルを設定・取得します。
 	 *
-	 * @param	string			$domain		ドメイン名
+	 * @param	string|array	$protocol	プロトコル
 	 * @param	callable		$callback	コールバック
 	 * @return	array|string	$callbackの指定がない場合は、グループに紐づくコネクタ配列、そうでない場合は現在のクラス名
 	 */
 	public static function protocol($protocol= null, $callback = null) {
 		if (is_null($callback)) {
 			return Group::init([
-				'method'	=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
-				'group'		=> static::$currentGroup ?? static::DEFAULT,
-				'domain'	=> static::$currentDomain ?? static::DEFAULT,
-				'protocol'	=> $protocol ?? static::getCurrentProtocol(),
+				'method'		=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
+				'group'			=> static::$currentGroup ?? static::DEFAULT,
+				'domain'		=> static::$currentDomain ?? static::DEFAULT,
+				'protocol'		=> (array) ($protocol ?? static::getCurrentProtocol()),
+				'middleware'	=> static::$currentMiddleware ?? static::DEFAULT,
 			]);
 		}
 
 		$base_protocol= static::$currentProtocol;
-		static::$currentProtocol = static::$currentProtocol;
+		static::$currentProtocol = $protocol;
 		$callback();
 		static::$currentProtocol = $base_protocol;
+
+		return static::class;
+	}
+
+	/**
+	 * ミドルウェアを設定・取得します。
+	 *
+	 * @param	string|array	$middleware	ミドルウェアエイリアス または ミドルウェアクラスパス
+	 * @param	callable		$callback	コールバック
+	 * @return	array|string	$callbackの指定がない場合は、グループに紐づくコネクタ配列、そうでない場合は現在のクラス名
+	 */
+	public static function middleware ($middleware= null, $callback = null) {
+		if (is_null($callback)) {
+			return Group::init([
+				'method'		=> static::$currentMethod ?? $_SERVER['REQUEST_METHOD'],
+				'group'			=> static::$currentGroup ?? static::DEFAULT,
+				'domain'		=> static::$currentDomain ?? static::DEFAULT,
+				'protocol'		=> (array) ($protocol ?? static::getCurrentProtocol()),
+				'middleware'	=> $middleware ?? static::$currentMiddleware ?? static::DEFAULT,
+			]);
+		}
+
+		$base_middleware= static::$currentMiddleware;
+		static::$currentMiddleware = $middleware;
+		$callback();
+		static::$currentMiddleware = $base_middleware;
 
 		return static::class;
 	}
@@ -492,14 +524,18 @@ abstract class Router {
 	/**
 	 * プロトコルにマッチするコネクタリストを取得します。
 	 *
-	 * @param	string	$protocol	プロトコル
+	 * @param	string|array	$protocols	プロトコル
 	 * @return	array	コネクタリスト
 	 */
-	public function findConnecterByProtocol ($protocol) {
-		return array_intersect_key(
-			static::$connecterList,
-			static::$protocolConnecterMap[$protocol] ?? []
-		);
+	public function findConnecterByProtocol ($protocols) {
+		$connecter_list = static::$connecterList;
+		foreach ((array) $protocols as $protocol) {
+			$connecter_list = array_intersect_key(
+				$connecter_list,
+				static::$protocolConnecterMap[$protocol] ?? []
+			);
+		}
+		$connecter_list;
 	}
 
 	//----------------------------------------------
@@ -528,15 +564,23 @@ abstract class Router {
 	 */
 	public static function find ($request_uri = null, $config = []) {
 		// Request URIの確定
-		$request_uri	= ltrim($request_uri ?? static::fetchCurrentPath()['path'] ?? '/', '/');
+		$path_info		= static::fetchCurrentPath($request_uri);
+		$request_uri	= ltrim($path_info['path'] ?? '/', '/');
 
 		// 現在のステータスの確定
 		$method		= $config['method'] ?? $_SERVER['REQUEST_METHOD'] ?? static::$currentMethod;
 		$group		= (array) ($config['group'] ?? static::$currentGroup ?? static::DEFAULT);
 		$domain		= $config['domain'] ?? static::$currentDomain ?? static::DEFAULT;
-		$protocol	= $config['protocol'] ?? static::$currentProtocol ?? static::getCurrentProtocol();
+		$protocols	= (array) ($config['protocol'] ?? static::$currentProtocol ?? static::getCurrentProtocol());
 
-		$enable_apcu	= function_exists('apc_fetch');
+		$protocol	= array_shift($protocols);
+		$protocol_map = static::$protocolConnecterMap[$protocol] ?? [];
+		foreach ((array) $protocols as $protocol) {
+			$protocol_map = array_intersect_key(
+				$protocol_map,
+				static::$protocolConnecterMap[$protocol] ?? []
+			);
+		}
 
 		// 有効な検索対象の確定
 		if (empty($connecter_list = array_intersect_key(
@@ -544,21 +588,17 @@ abstract class Router {
 			static::$methodConnecterMap[$method] ?? [],
 			static::GetLowest(static::$groupConnecterMap, $group),
 			static::$domainConnecterMap[$domain] ?? [],
-			static::$protocolConnecterMap[$protocol] ?? []
+			$protocol_map
 		))) {
-			return [];
+			return false;
 		}
 
 		// キャッシュキーの構築
 		$cache_key	= sprintf('%s<>%s<>%s<>%s', implode('~', $group), $domain, $protocol, $method);
 
-		// 返り値初期化
-		$result	= [
-			static::KEY_ROUTING_URI			=> null,
-			static::KEY_PATH_PARAMETER_LIST	=> [],
-		];
-
 		// コネクタパスキャッシュ
+		$enable_apcu	= function_exists('apc_fetch');
+
 		if ($enable_apcu) {
 			static::$reverseUrl[':path:'] = apc_fetch('connecter_path_cache');
 		} else {
@@ -586,11 +626,21 @@ abstract class Router {
 				continue;
 			}
 
-			// ルーティング対象URIの確定
-			$result[static::KEY_ROUTING_URI]	= array_shift($matches);
-			$path_parameter_list	= [];
+			// ルーティング対象の確定
+			$result	= $connecter->copy();
+			$result->method($method);
+			$result->protocol(static::getCurrentProtocol());
+			$result->routingUri(array_shift($matches));
+			$result->pathInfo($path_info);
+			$result->cliOptions(static::fetchCliOptions());
+			$result->header(static::fetchHeader());
+			$result->post(static::fetchPost());
+			$result->parameters(static::fetchParameters());
+			$result->commonConfigs(static::$commonOptions ?? []);
+			$result->ruleBaseConfigs(static::$ruleBaseOptions ?? []);
 
 			// パスパラメータの確定
+			$path_parameter_list	= [];
 			foreach ($path_parameter_name_list as $path_parameter_idx => $path_parameter_name) {
 				if ($path_parameter_name === '') {
 					unset($path_parameter_name_list[$path_parameter_idx]);
@@ -598,41 +648,10 @@ abstract class Router {
 					$path_parameter_list[$path_parameter_name]	= $matches[$path_parameter_idx];
 				}
 			}
-			$result[static::KEY_PATH_PARAMETER_LIST]	= $path_parameter_list;
-
-			//@TODO 保留
-			// 共通設定オプションの有無の取得
-			$enable_common_options = empty(static::$_commonOptions) ? [] : static::$_commonOptions;
-
-			//		@TODO 活かすかどうか未確定
-			// 		//ルールベースオプションの有無の判定
-			// 		$rule_base_options = [];
-			// 		$rule_base_option_master = static::$_ruleBaseOptions;
-			// 		ksort($rule_base_option_master);
-			// 		foreach ($rule_base_option_master as $rule => $options) {
-			// 			if (preg_match(sprintf("/^%s$/", str_replace('/', "\\/", ltrim($rule, '/'))), $url) === 1) {
-			// 				$rule_base_options = array_merge($rule_base_options, $options);
-			// 			}
-			// 		}
-
-// 			$options	= $connection['options'];
-// 			if ($enable_common_options && $options !== null) {
-// 				$options = array_merge(static::$_commonOptions, $options);
-// 			}
-// 			$options = array_merge($rule_base_options, $options);
-
-// 			$controller = isset($options['controller']) ? $options['controller'] : null;
-// 			$controller = $controller ?: (isset($options[0]) ? $options[0] : null);
-// 			$controller = $controller ?: (isset($parameter['controller']) ? $parameter['controller'] : 'index');
-// 			$controller = str_replace('/', '_', $controller);
-
-// 			$action = isset($options['action']) ? $options['action'] : null;
-// 			$action = $action ?: (isset($options[1]) ? $options[1] : null);
-// 			$action = $action ?: (isset($parameter['action']) ? $parameter['action'] : 'index');
-// 			$action = str_replace('/', '_', $action);
+			$result->pathParameters($path_parameter_list);
 
 			if ($enable_apcu) {
-				apc_add('connecter_path_cache', static::$reverseUrl[':path:']);
+				apc_add('connecter_path_cache', static::$reverseUrl[':path:'], 300);
 			} else {
 				if (file_exists($connect_path_cache_dir = dirname(static::$connectPathCachePath)) || mkdir($connect_path_cache_dir, 0775, true)) {
 					file_put_contents(static::$connectPathCachePath, sprintf('<?php return %s;', var_export(static::$reverseUrl[':path:'], true)));
@@ -642,15 +661,14 @@ abstract class Router {
 		}
 
 		if ($enable_apcu) {
-			apc_add('connecter_path_cache', static::$reverseUrl[':path:']);
+			apc_add('connecter_path_cache', static::$reverseUrl[':path:'], 300);
 		} else {
 			if (file_exists($connect_path_cache_dir = dirname(static::$connectPathCachePath)) || mkdir($connect_path_cache_dir, 0775, true)) {
 				file_put_contents(static::$connectPathCachePath, sprintf('<?php return %s;', var_export(static::$reverseUrl[':path:'], true)));
 			}
 		}
-		return [];
+		return false;
 	}
-
 
 	/**
 	 * パスから正規表現パートを抽出します。
@@ -796,8 +814,6 @@ abstract class Router {
 		//処理の終了
 		return [$path, $path_parameter_list, $pattern_list];
 	}
-
-
 
 	/**
 	 * 現在接続中のプロトコルを返します。
@@ -982,6 +998,26 @@ abstract class Router {
 	}
 
 	/**
+	 * HTTPゲットパラメータを取得します。
+	 *
+	 * このメソッドの実行結果は同一リエスト内においてキャッシュされます。
+	 *
+	 * @return array
+	 */
+	public static function fetchParameters ($path_info = null) {
+		if (is_null($path_info) && isset(static::$parsedRequestInfo[__FUNCTION__])) {
+			return static::$parsedRequestInfo[__FUNCTION__];
+		}
+
+		if (namespace\IS_CLI) {
+			$query_string = ($path_info ?? static::fetchCurrentPath())['query_string'] ?? '';
+			parse_str($query_string, $get);
+			return static::$parsedRequestInfo[__FUNCTION__] = $get;
+		}
+		return static::$parsedRequestInfo[__FUNCTION__] = $_GET;
+	}
+
+	/**
 	 * 指定された階層にある値を設定します。
 	 *
 	 * @param	array	$array	配列
@@ -1032,7 +1068,7 @@ abstract class Router {
 	 * @param	array	$options	共通設定オプション
 	 */
 	public static function SetCommonOptions ($options) {
-		static::$_commonOptions = $options;
+		static::$commonOptions = $options;
 	}
 
 	/**
@@ -1041,7 +1077,7 @@ abstract class Router {
 	 * @param	array	$options	共通設定オプション
 	 */
 	public static function SetRuleBaseOption ($rule, $options) {
-		static::$_ruleBaseOptions[$rule] = $options;
+		static::$ruleBaseOptions[$rule] = $options;
 	}
 
 	/**
@@ -1099,7 +1135,7 @@ abstract class Router {
 		}
 
 		//共通設定オプションの有無の取得
-		$enable_common_options = !empty(static::$_commonOptions);
+		$enable_common_options = !empty(static::$commonOptions);
 
 		//Connection単位で処理
 		foreach ($connection_list as $connection) {
@@ -1120,7 +1156,7 @@ abstract class Router {
 				//optionsを先に取得しておく
 				$options = isset($connection['options']) ? $connection['options'] : null;
 				if ($enable_common_options && $options !== null) {
-					$options = array_merge(static::$_commonOptions, $options);
+					$options = array_merge(static::$commonOptions, $options);
 				}
 
 				//コントローラパターンの抽出

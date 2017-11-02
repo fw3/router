@@ -46,6 +46,9 @@ trait BasePropertyTrait{
 	/** @var	string	対象プロトコル */
 	protected $protocol	= null;
 
+	/** @var	array	適用ミドルウェア */
+	protected $middleware	= null;
+
 	//==============================================
 	// メソッド
 	//==============================================
@@ -102,6 +105,20 @@ trait BasePropertyTrait{
 			return $this->protocol;
 		}
 		$this->protocol = $args[0];
+		return $this;
+	}
+
+	/**
+	 * 適用するミドルウェアを取得、設定します。
+	 *
+	 * @param	array	...$args	設定値
+	 * @return	string|\fw3\router\Group|\fw3\router\Connecter	引数が無い場合は現在の値、ある場合は設定した後のこのクラスのインスタンス
+	 */
+	public function middleware (...$args) {
+		if (empty($args)) {
+			return $this->middleware;
+		}
+		$this->middleware = $args[0];
 		return $this;
 	}
 }

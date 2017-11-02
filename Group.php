@@ -42,10 +42,11 @@ class Group {
 	 * @param	array	$current	設定
 	 */
 	protected function __construct ($current) {
-		$this->method	= $current['method'] ?? null;
-		$this->group	= $current['group'] ?? null;
-		$this->domain	= $current['domain'] ?? null;
-		$this->protocol	= $current['protocol'] ?? null;
+		$this->method		= $current['method'] ?? null;
+		$this->group		= $current['group'] ?? null;
+		$this->domain		= $current['domain'] ?? null;
+		$this->protocol		= $current['protocol'] ?? null;
+		$this->middleware	= $current['middleware'] ?? null;
 	}
 
 	//==============================================

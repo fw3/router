@@ -43,9 +43,10 @@ trait RestAccessibleTrait {
 	public static function get ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_GET, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_GET, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -53,7 +54,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_GET][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return $connecter;
@@ -69,9 +72,10 @@ trait RestAccessibleTrait {
 	public static function post ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_POST, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_POST, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -79,7 +83,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_POST][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -90,15 +96,15 @@ trait RestAccessibleTrait {
 	 *
 	 * @param	string	$path		リクエストURI
 	 * @param	array	$configs	設定
-* @return	\fw3\router\Connecter	コネクタ
-	 outerConnecter	コネクタ
+	 * @return	\fw3\router\Connecter	コネクタ
 	 */
 	public static function put ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_PUT, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_PUT, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -106,7 +112,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_PUT][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -122,9 +130,10 @@ trait RestAccessibleTrait {
 	public static function patch ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_PATCH, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_PATCH, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -132,7 +141,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_PATCH][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -148,9 +159,10 @@ trait RestAccessibleTrait {
 	public static function delete ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_DELETE, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_DELETE, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -158,7 +170,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_DELETE][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;
@@ -174,9 +188,10 @@ trait RestAccessibleTrait {
 	public static function options ($path, $configs = []) {
 		$domain		= $configs['domain'] ?? static::$currentDomain ?? static::DEFAULT;
 		$group		= (array) ($configs['group'] ?? static::$currentGroup ?? static::DEFAULT);
-		$protocol	= $configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol();
+		$protocols	= (array) ($configs['protocol'] ?? static::$currentProtocol ?? $_SERVER['HTTP_PROTOCOL'] ?? static::getCurrentProtocol());
+		$middleware	= $configs['middleware'] ?? static::$currentMiddleware ?? static::DEFAULT;
 
-		$connecter = Connecter::init($path, $configs, static::TYPE_OPTIONS, $domain, $group);
+		$connecter	= Connecter::init($path, $configs, static::TYPE_OPTIONS, $domain, $group, $middleware);
 		static::$connecterList[] = $connecter;
 
 		end(static::$connecterList);
@@ -184,7 +199,9 @@ trait RestAccessibleTrait {
 
 		static::$methodConnecterMap[static::TYPE_OPTIONS][$index]	= $index;
 		static::$domainConnecterMap[$domain][$index]			= $index;
-		static::$protocolConnecterMap[$protocol][$index]		= $index;
+		foreach ($protocols as $protocol) {
+			static::$protocolConnecterMap[$protocol][$index]	= $index;
+		}
 		static::$groupConnecterMap = static::SetLowest(static::$groupConnecterMap, array_merge($group, [$index]), $index);
 
 		return static::class;

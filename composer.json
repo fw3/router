@@ -1,6 +1,7 @@
 {
     "name": "fw3/router",
     "description": "The Flywheel3 routing package.",
+    "type": "library",
     "license": "MIT",
     "homepage": "https://ickx.jp/",
     "support": {
